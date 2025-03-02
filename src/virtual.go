@@ -4,9 +4,18 @@ package chip8
 // Virtual hardware used by the CHIP-8
 // ------------------------------------------------
 
-const RAM = 4096
+const (
+	RAM          = 4096
+	STACK_SIZE   = 100
+	DISPLAY_COLS = 64
+	DISPLAY_ROWS = 32
+)
 
-var memory = make([]uint8, RAM)
+var memory = make([]byte, RAM)
+
+var stack = make([]uint16, STACK_SIZE)
+
+var display = make([][]bool, DISPLAY_ROWS)
 
 var font = []uint8{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -27,8 +36,14 @@ var font = []uint8{
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 }
 
+// TODO: add a ticker and subscription mechanism depending on how implementation pans out
+type TimerRegister struct {
+	val byte
+}
+
 // ------------------------------------------------
 // 1. First 512 bytes in memory used to have the interpreter, that is no longer true as our interpreter runs in Go space. We can use first 512 for storing the font sprites. 60 bytes between 80-159 (0x050-0x09F)
+// 2. Display is modelled as a 2D boolean array with 64 columns and 32 rows. To initialize the rows, we need a loop.
 // ------------------------------------------------
 func initialize() {
 
@@ -40,6 +55,11 @@ func initialize() {
 		location := j
 
 		memory[location] = val
+	}
+
+	// Initialize the rows for display, each row has 'COLS' number of elems
+	for i := 0; i < DISPLAY_ROWS; i++ {
+		display[i] = make([]bool, DISPLAY_COLS)
 	}
 
 }
