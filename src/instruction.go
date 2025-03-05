@@ -16,6 +16,7 @@ func (i instruction) firstNibble() nibble {
 	mask := uint16(0xF000)
 	val := uint16(i)
 	res := val & mask
+	res >>= 12
 	firstNibble := nibble(res)
 	return firstNibble
 }
@@ -27,6 +28,7 @@ func (i instruction) x() nibble {
 	mask := uint16(0x0F00)
 	val := uint16(i)
 	res := val & mask
+	res >>= 8
 	x := nibble(res)
 	return x
 }
@@ -38,6 +40,7 @@ func (i instruction) y() nibble {
 	mask := uint16(0x00F0)
 	val := uint16(i)
 	res := val & mask
+	res >>= 4
 	y := nibble(res)
 	return y
 }
@@ -57,9 +60,10 @@ func (i instruction) n() nibble {
 // The second byte is called nn
 // ------------------------------------------------
 func (i instruction) nn() byte {
-	mask := uint16(0x00FF)
+	mask := uint16(0x0FF0)
 	val := uint16(i)
 	res := val & mask
+	res >>= 4
 	nn := byte(res)
 	return nn
 }
