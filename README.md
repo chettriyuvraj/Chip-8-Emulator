@@ -96,3 +96,6 @@ IGNORE the second nibble - one nibble is enough to represent the row.
 
 ![alt text](image.png)
 
+## Corrections to the chip-8 guide
+
+- Not mentioned if chip-8 is big endian or little endian, which it should. It is big-endian btw.
