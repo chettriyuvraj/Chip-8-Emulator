@@ -15,7 +15,7 @@ var memory = make([]byte, RAM)
 
 var stack = make([]uint16, STACK_SIZE)
 
-var display = make([][]bool, DISPLAY_ROWS)
+var display = make([][]int, DISPLAY_ROWS)
 
 var font = []uint8{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -39,22 +39,22 @@ var font = []uint8{
 var PC uint16
 var I uint16
 var registers = map[nibble]uint8{
-	NIBBLE_0:  0,
-	NIBBLE_1:  0,
-	NIBBLE_2:  0,
-	NIBBLE_3:  0,
-	NIBBLE_4:  0,
-	NIBBLE_5:  0,
-	NIBBLE_6:  0,
-	NIBBLE_7:  0,
-	NIBBLE_8:  0,
-	NIBBLE_9:  0,
-	NIBBLE_10: 0,
-	NIBBLE_11: 0,
-	NIBBLE_12: 0,
-	NIBBLE_13: 0,
-	NIBBLE_14: 0,
-	NIBBLE_15: 0,
+	NIBBLE_0: 0,
+	NIBBLE_1: 0,
+	NIBBLE_2: 0,
+	NIBBLE_3: 0,
+	NIBBLE_4: 0,
+	NIBBLE_5: 0,
+	NIBBLE_6: 0,
+	NIBBLE_7: 0,
+	NIBBLE_8: 0,
+	NIBBLE_9: 0,
+	NIBBLE_A: 0,
+	NIBBLE_B: 0,
+	NIBBLE_C: 0,
+	NIBBLE_D: 0,
+	NIBBLE_E: 0,
+	NIBBLE_F: 0,
 }
 
 // TODO: add a ticker and subscription mechanism depending on how implementation pans out
@@ -80,7 +80,7 @@ func initialize() {
 
 	// Initialize the rows for display, each row has 'COLS' number of elems
 	for i := 0; i < DISPLAY_ROWS; i++ {
-		display[i] = make([]bool, DISPLAY_COLS)
+		display[i] = make([]int, DISPLAY_COLS)
 	}
 
 }
