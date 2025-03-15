@@ -34,6 +34,11 @@ func loop() {
 			x := instruction.x()
 			setRegister(x, nn)
 
+		// ANNN
+		case instruction.firstNibble().equals(0x0A):
+			nnn := instruction.nnn()
+			setIndexRegister(nnn)
+
 		}
 	}
 
@@ -89,4 +94,8 @@ func addToRegister(registerNum nibble, val byte) {
 	}
 
 	registers[registerNum] += val
+}
+
+func setIndexRegister(val uint16) {
+	I = val
 }
