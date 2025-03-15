@@ -28,6 +28,12 @@ func loop() {
 			x := instruction.x()
 			setRegister(x, nn)
 
+		// 7XNN
+		case instruction.firstNibble().equals(0x07):
+			nn := instruction.nn()
+			x := instruction.x()
+			setRegister(x, nn)
+
 		}
 	}
 
@@ -74,4 +80,13 @@ func setRegister(registerNum nibble, val byte) {
 	}
 
 	registers[registerNum] = val
+}
+
+func addToRegister(registerNum nibble, val byte) {
+	_, exists := registers[registerNum]
+	if !exists {
+		panic("trying to add val to invalid vx register")
+	}
+
+	registers[registerNum] += val
 }
