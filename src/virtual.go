@@ -38,23 +38,23 @@ var font = []uint8{
 
 var PC uint16
 var I uint16
-var registers = map[string]uint8{
-	"V0": 0,
-	"V1": 0,
-	"V2": 0,
-	"V3": 0,
-	"V4": 0,
-	"V5": 0,
-	"V6": 0,
-	"V7": 0,
-	"V8": 0,
-	"V9": 0,
-	"VA": 0,
-	"VB": 0,
-	"VC": 0,
-	"VD": 0,
-	"VE": 0,
-	"VF": 0,
+var registers = map[nibble]uint8{
+	NIBBLE_0:  0,
+	NIBBLE_1:  0,
+	NIBBLE_2:  0,
+	NIBBLE_3:  0,
+	NIBBLE_4:  0,
+	NIBBLE_5:  0,
+	NIBBLE_6:  0,
+	NIBBLE_7:  0,
+	NIBBLE_8:  0,
+	NIBBLE_9:  0,
+	NIBBLE_10: 0,
+	NIBBLE_11: 0,
+	NIBBLE_12: 0,
+	NIBBLE_13: 0,
+	NIBBLE_14: 0,
+	NIBBLE_15: 0,
 }
 
 // TODO: add a ticker and subscription mechanism depending on how implementation pans out
