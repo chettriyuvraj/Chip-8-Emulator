@@ -1,7 +1,7 @@
 package chip8
 
 func main() {
-
+	loop()
 }
 
 // ------------------------------------------------
@@ -12,6 +12,23 @@ func loop() {
 
 	for {
 		instruction := fetch()
+
+		switch {
+		case instruction == 0x00E0:
+			clearScreen()
+
+		// 1NNN
+		case instruction.firstNibble().equals(0x01):
+			nnn := instruction.nnn()
+			jumpTo(nnn)
+
+		// 6XNN
+		case instruction.firstNibble().equals(0x06):
+			nn := instruction.nn()
+			x := instruction.x()
+			setRegister(x, nn)
+
+		}
 	}
 
 }
@@ -20,16 +37,41 @@ func loop() {
 // Fetches the 16-byte instruction
 // TODO: What happens if PC overshoots the cycle?
 // ------------------------------------------------
-func fetch() (instruction uint16) {
+func fetch() instruction {
+	var rawInstruction uint16
+
 	firstByte := memory[PC]
 	secondByte := memory[PC+1]
 
 	firstByteExtended := uint16(firstByte)
-	instruction |= firstByteExtended
-	instruction <<= 8
+	rawInstruction |= firstByteExtended
+	rawInstruction <<= 8
 
 	secondByteExtended := uint16(secondByte)
-	instruction |= secondByteExtended
+	rawInstruction |= secondByteExtended
+
+	instruction := instruction(rawInstruction)
 
 	return instruction
+}
+
+func clearScreen() {
+	for i := range DISPLAY_ROWS {
+		for j := range DISPLAY_COLS {
+			display[i][j] = false
+		}
+	}
+}
+
+func jumpTo(instruction uint16) {
+	PC = instruction
+}
+
+func setRegister(registerNum nibble, val byte) {
+	_, exists := registers[registerNum]
+	if !exists {
+		panic("trying to set invalid vx register")
+	}
+
+	registers[registerNum] = val
 }
