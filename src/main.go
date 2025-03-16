@@ -1,7 +1,25 @@
-package chip8
+package main
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"os"
+)
 
 func main() {
+	initialize()
+
+	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/IBM_Logo.ch8"
+	err := load(romPath)
+	// set PC to start of rom
+	PC = 0x200
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	loop()
+
 }
 
 // ------------------------------------------------
@@ -10,8 +28,9 @@ func main() {
 // ------------------------------------------------
 func loop() {
 
-	for {
+	for PC < RAM {
 		instruction := fetch()
+		PC += 2
 
 		switch {
 		case instruction == 0x00E0:
@@ -32,7 +51,7 @@ func loop() {
 		case instruction.firstNibble().equals(0x07):
 			nn := instruction.nn()
 			x := instruction.x()
-			setRegister(x, nn)
+			addToRegister(x, nn)
 
 		// ANNN
 		case instruction.firstNibble().equals(0x0A):
@@ -45,6 +64,7 @@ func loop() {
 			y := instruction.y() // vy register contains the y coordinate
 			n := instruction.n()
 			draw(x, y, n)
+			updateScreen()
 
 		}
 	}
@@ -119,39 +139,41 @@ func draw(registerXNo, registerYNo nibble, height nibble) {
 		panic("trying to get draw y coordinate from invalid register")
 	}
 
-	x %= DISPLAY_ROWS
-	y %= DISPLAY_COLS
+	x %= DISPLAY_COLS
+	y %= DISPLAY_ROWS
+
+	originalX := x
 
 	// VF is the collision register, set it to 0 initially
 	registers[NIBBLE_F] = 0
 
 	for n := NIBBLE_0; n < height; n++ {
-		curSpritePosition := nibble(I) + n
-		spriteVal := memory[curSpritePosition+n]
+		curSpritePosition := I + uint16(n)
+		spriteVal := memory[curSpritePosition]
 
 		byteIdx := 7
-		for y < DISPLAY_COLS {
+		for x < DISPLAY_COLS && byteIdx >= 0 {
 			mask := isBitOn(spriteVal, byteIdx)
 
 			// set collision register
-			if mask == 1 && display[x][y] == 1 {
+			if mask != 0 && display[y][x] == 1 {
 				registers[NIBBLE_F] = 1
 			}
 
-			display[x][y] ^= mask
+			display[y][x] ^= mask
 
-			y += 1
+			x += 1
 			byteIdx -= 1
 		}
 
-		// Set y to the 0th column
-		y %= DISPLAY_COLS
+		// Set x-coordinate back to its original value
+		x = originalX
 
-		// Move x forward to next row
-		x += 1
+		// Move y coordinate forward to next row
+		y += 1
 
 		// Break if we have reached bottom of the screen i.e. last row
-		if x%DISPLAY_ROWS == 0 {
+		if y >= DISPLAY_ROWS {
 			break
 		}
 
@@ -164,4 +186,44 @@ func isBitOn(val uint8, idx int) int { // index must only be between between 0 a
 
 	mask := uint8(1) << idx
 	return int(val & mask) // will return only 1 or 0
+}
+
+// ------------------------------------------------
+// Load chip-8 'rom' to memory
+// ------------------------------------------------
+
+func load(filepath string) error {
+	// this is where programs start in memory for chip-8
+	start := 0x200
+
+	f, err := os.Open(filepath)
+	if err != nil {
+		return fmt.Errorf("error loading rom to memory: %w", err)
+	}
+
+	romData, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("error loading rom to memory: %w", err)
+	}
+
+	lenRom := len(romData)
+	for i, j := start, 0; i < RAM && j < lenRom; i, j = i+1, j+1 {
+		memory[i] = romData[j]
+	}
+
+	return nil
+}
+
+func updateScreen() {
+	for i := 0; i < DISPLAY_ROWS; i++ {
+		for j := 0; j < DISPLAY_COLS; j++ {
+			if display[i][j] == 0 {
+				fmt.Printf("%d", 0)
+			} else {
+				fmt.Printf("%d", 1)
+			}
+
+		}
+		fmt.Println()
+	}
 }

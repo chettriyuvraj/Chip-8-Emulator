@@ -1,4 +1,4 @@
-package chip8
+package main
 
 // ------------------------------------------------
 // Virtual hardware used by the CHIP-8
@@ -69,14 +69,14 @@ type TimerRegister struct {
 func initialize() {
 
 	// Initialize fonts in memory
-	start := 0x50
-	end := 0x9F
-	for i, j := 0, start; i <= end; i, j = i+1, j+1 {
-		val := font[i]
-		location := j
+	// start := 0x50
+	// end := 0x9F
+	// for i, j := 0, start; i <= end; i, j = i+1, j+1 {
+	// 	val := font[i]
+	// 	location := j
 
-		memory[location] = val
-	}
+	// 	memory[location] = val
+	// }
 
 	// Initialize the rows for display, each row has 'COLS' number of elems
 	for i := 0; i < DISPLAY_ROWS; i++ {
