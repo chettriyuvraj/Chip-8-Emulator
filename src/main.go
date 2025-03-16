@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 )
 
 func main() {
@@ -12,11 +13,12 @@ func main() {
 
 	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/IBM_Logo.ch8"
 	err := load(romPath)
-	// set PC to start of rom
-	PC = 0x200
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// set PC to start of rom
+	PC = 0x200
 
 	loop()
 
@@ -34,7 +36,7 @@ func loop() {
 
 		switch {
 		case instruction == 0x00E0:
-			clearScreen()
+			clearDisplay()
 
 		// 1NNN
 		case instruction.firstNibble().equals(0x01):
@@ -64,7 +66,8 @@ func loop() {
 			y := instruction.y() // vy register contains the y coordinate
 			n := instruction.n()
 			draw(x, y, n)
-			updateScreen()
+			clearConsole()
+			printDisplay()
 
 		}
 	}
@@ -93,7 +96,7 @@ func fetch() instruction {
 	return instruction
 }
 
-func clearScreen() {
+func clearDisplay() {
 	for i := range DISPLAY_ROWS {
 		for j := range DISPLAY_COLS {
 			display[i][j] = 0
@@ -214,7 +217,7 @@ func load(filepath string) error {
 	return nil
 }
 
-func updateScreen() {
+func printDisplay() {
 	for i := 0; i < DISPLAY_ROWS; i++ {
 		for j := 0; j < DISPLAY_COLS; j++ {
 			if display[i][j] == 0 {
@@ -226,4 +229,11 @@ func updateScreen() {
 		}
 		fmt.Println()
 	}
+}
+
+// Function to clear the console screen
+func clearConsole() {
+	cmd := exec.Command("clear") // "cls" for Windows
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
