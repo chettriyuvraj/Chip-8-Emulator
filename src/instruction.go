@@ -1,4 +1,4 @@
-package chip8
+package main
 
 // ------------------------------------------------
 // Methods for extracting emulator instruction
@@ -79,10 +79,9 @@ func (i instruction) n() nibble {
 // The second byte is called nn
 // ------------------------------------------------
 func (i instruction) nn() byte {
-	mask := uint16(0x0FF0)
+	mask := uint16(0x00FF)
 	val := uint16(i)
 	res := val & mask
-	res >>= 4
 	nn := byte(res)
 	return nn
 
