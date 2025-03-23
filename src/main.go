@@ -104,6 +104,10 @@ func loop() {
 			regYIdx := instruction.y()
 			skipInstructionIfRegistersNotEqualEachOther(regXIdx, regYIdx)
 
+		// 8X set of instructions
+		case instruction.firstNibble().equals(0x8):
+			logicalAndArithmetic(instruction)
+
 		}
 
 	}
@@ -320,5 +324,96 @@ func skipInstructionIfRegistersNotEqualEachOther(regXIdx, regYIdx nibble) {
 	regYVal := registers[regYIdx]
 	if regXVal != regYVal {
 		PC += 2
+	}
+}
+
+// 8X set of instructions
+func logicalAndArithmetic(i instruction) {
+	x := i.x()
+	y := i.y()
+	n := i.n()
+
+	switch {
+	// Set register vx to vy's val
+	case n.equals(0x0):
+		regYVal := registers[y]
+		setRegister(x, regYVal)
+
+	// VX = VX | VY
+	case n.equals(0x1):
+		regXVal := registers[x]
+		regYVal := registers[y]
+		registers[x] = regXVal | regYVal
+
+	// VX = VX & VY
+	case n.equals(0x2):
+		regXVal := registers[x]
+		regYVal := registers[y]
+		registers[x] = regXVal & regYVal
+
+	// VX = VX ^ VY
+	case n.equals(0x3):
+		regXVal := registers[x]
+		regYVal := registers[y]
+		registers[x] = regXVal ^ regYVal
+
+	// VX = VX + VY and set carry flag if overflow
+	case n.equals(0x4):
+		regXVal := registers[x]
+		regYVal := registers[y]
+		newVal := regXVal + regYVal
+		registers[x] = newVal
+		if (newVal < regXVal) || (newVal < regYVal) { // overflow
+			registers[NIBBLE_F] = 1
+		} else {
+			registers[NIBBLE_F] = 0
+		}
+
+	// VX = VX - VY and set carry flag if NO underflow
+	case n.equals(0x5):
+		regXVal := registers[x]
+		regYVal := registers[y]
+		registers[x] = regXVal - regYVal
+		if regXVal > regYVal { // NO underflow
+			registers[NIBBLE_F] = 1
+		} else {
+			registers[NIBBLE_F] = 0
+		}
+
+	// VX = VY - VX and set carry flag if NO underflow
+	case n.equals(0x7):
+		regXVal := registers[x]
+		regYVal := registers[y]
+		registers[x] = regYVal - regXVal
+		if regYVal > regXVal { // NO underflow
+			registers[NIBBLE_F] = 1
+		} else {
+			registers[NIBBLE_F] = 0
+		}
+
+	// Left and right shift
+	case n.equals(0x6) || n.equals(0xE):
+		if shift1 {
+			regYVal := registers[y]
+			registers[x] = regYVal
+		}
+
+		// right shift
+		if n.equals(0x6) {
+			// get rightmost bit and set carry flag
+			regXVal := registers[x]
+			rightMostBit := 0x1 & regXVal
+			registers[NIBBLE_F] = rightMostBit
+			// right shift
+			registers[x] >>= 1
+		} else { // left shift
+			// get leftmost bit and set carry flag
+			regXVal := registers[x]
+			leftmostBit := 0x1 & (regXVal >> 7)
+			registers[NIBBLE_F] = leftmostBit
+			// left shift
+			registers[x] <<= 1
+		}
+
 	}
 }
