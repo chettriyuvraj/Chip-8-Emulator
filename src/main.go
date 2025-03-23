@@ -80,6 +80,17 @@ func loop() {
 			poppedInstruction := popStack()
 			setPC(poppedInstruction)
 
+		// 3XNN
+		case instruction.firstNibble().equals(0x3):
+			registerIdx := instruction.x()
+			valToCheck := instruction.nn()
+			skipInstructionIfRegisterEquals(registerIdx, valToCheck)
+
+		// 4XNN
+		case instruction.firstNibble().equals(0x4):
+			registerIdx := instruction.x()
+			valToCheck := instruction.nn()
+			skipInstructionIfRegisterNotEquals(registerIdx, valToCheck)
 		}
 	}
 
@@ -266,4 +277,18 @@ func popStack() uint16 {
 
 func setPC(instruction uint16) {
 	PC = instruction
+}
+
+func skipInstructionIfRegisterEquals(registerIdx nibble, val uint8) {
+	regVal := registers[registerIdx]
+	if regVal == val {
+		PC += 2
+	}
+}
+
+func skipInstructionIfRegisterNotEquals(registerIdx nibble, val uint8) {
+	regVal := registers[registerIdx]
+	if regVal != val {
+		PC += 2
+	}
 }
