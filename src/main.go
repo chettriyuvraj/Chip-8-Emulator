@@ -69,6 +69,17 @@ func loop() {
 			clearConsole()
 			printDisplay()
 
+		// 2NNN
+		case instruction.firstNibble().equals(0x2):
+			nnn := instruction.nnn()
+			pcToStack()
+			jumpTo(nnn)
+
+		// 00EE
+		case instruction == 0x00E0:
+			poppedInstruction := popStack()
+			setPC(poppedInstruction)
+
 		}
 	}
 
@@ -236,4 +247,23 @@ func clearConsole() {
 	cmd := exec.Command("clear") // "cls" for Windows
 	cmd.Stdout = os.Stdout
 	cmd.Run()
+}
+
+func pcToStack() {
+	stack = append(stack, PC)
+}
+
+func popStack() uint16 {
+	elemCount := len(stack)
+	lastIdx := elemCount - 1
+	lastElem := stack[lastIdx]
+
+	// reduce stack length by one
+	stack = stack[:elemCount-1]
+
+	return lastElem
+}
+
+func setPC(instruction uint16) {
+	PC = instruction
 }
