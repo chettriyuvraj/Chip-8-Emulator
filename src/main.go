@@ -91,7 +91,21 @@ func loop() {
 			registerIdx := instruction.x()
 			valToCheck := instruction.nn()
 			skipInstructionIfRegisterNotEquals(registerIdx, valToCheck)
+
+		// 5XYO
+		case instruction.firstNibble().equals(0x5):
+			regXIdx := instruction.x()
+			regYIdx := instruction.y()
+			skipInstructionIfRegistersEqualEachOther(regXIdx, regYIdx)
+
+		// 9XYO
+		case instruction.firstNibble().equals(0x9):
+			regXIdx := instruction.x()
+			regYIdx := instruction.y()
+			skipInstructionIfRegistersNotEqualEachOther(regXIdx, regYIdx)
+
 		}
+
 	}
 
 }
@@ -289,6 +303,22 @@ func skipInstructionIfRegisterEquals(registerIdx nibble, val uint8) {
 func skipInstructionIfRegisterNotEquals(registerIdx nibble, val uint8) {
 	regVal := registers[registerIdx]
 	if regVal != val {
+		PC += 2
+	}
+}
+
+func skipInstructionIfRegistersEqualEachOther(regXIdx, regYIdx nibble) {
+	regXVal := registers[regXIdx]
+	regYVal := registers[regYIdx]
+	if regXVal == regYVal {
+		PC += 2
+	}
+}
+
+func skipInstructionIfRegistersNotEqualEachOther(regXIdx, regYIdx nibble) {
+	regXVal := registers[regXIdx]
+	regYVal := registers[regYIdx]
+	if regXVal != regYVal {
 		PC += 2
 	}
 }
