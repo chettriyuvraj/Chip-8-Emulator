@@ -59,6 +59,8 @@ var registers = map[nibble]uint8{
 
 var shift1 bool // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
 
+var bnnn1 bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
+
 // TODO: add a ticker and subscription mechanism depending on how implementation pans out
 type TimerRegister struct {
 	val byte

@@ -108,6 +108,20 @@ func loop() {
 		case instruction.firstNibble().equals(0x8):
 			logicalAndArithmetic(instruction)
 
+		// BNNN or BXNN
+		case instruction.firstNibble().equals(0xB):
+			var offsetRegisterIdx nibble
+
+			switch bnnn1 {
+			case true: // BNNN
+				offsetRegisterIdx = NIBBLE_0
+			case false: // BXNN
+				offsetRegisterIdx = instruction.x()
+			}
+
+			addr := instruction.nnn()
+			jumpWithOffset(addr, offsetRegisterIdx)
+
 		}
 
 	}
@@ -146,6 +160,10 @@ func clearDisplay() {
 
 func jumpTo(instruction uint16) {
 	PC = instruction
+}
+
+func jumpWithOffset(addr uint16, offsetRegisterIdx nibble) {
+
 }
 
 func setRegister(registerNum nibble, val byte) {
