@@ -4,18 +4,16 @@ package main
 // Virtual hardware used by the CHIP-8
 // ------------------------------------------------
 
+// ------------------------------------------------
+// Constants
+// ------------------------------------------------
+
 const (
 	RAM          = 4096
 	STACK_SIZE   = 100
 	DISPLAY_COLS = 64
 	DISPLAY_ROWS = 32
 )
-
-var memory = make([]byte, RAM)
-
-var stack = make([]uint16, STACK_SIZE)
-
-var display = make([][]int, DISPLAY_ROWS)
 
 var font = []uint8{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -36,43 +34,38 @@ var font = []uint8{
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 }
 
-var PC uint16
-var I uint16
-var registers = map[nibble]uint8{
-	NIBBLE_0: 0,
-	NIBBLE_1: 0,
-	NIBBLE_2: 0,
-	NIBBLE_3: 0,
-	NIBBLE_4: 0,
-	NIBBLE_5: 0,
-	NIBBLE_6: 0,
-	NIBBLE_7: 0,
-	NIBBLE_8: 0,
-	NIBBLE_9: 0,
-	NIBBLE_A: 0,
-	NIBBLE_B: 0,
-	NIBBLE_C: 0,
-	NIBBLE_D: 0,
-	NIBBLE_E: 0,
-	NIBBLE_F: 0,
+// ------------------------------------------------
+// Chip8 struct
+// ------------------------------------------------
+type Chip8 struct {
+	memory    []byte
+	stack     []uint16
+	display   [][]int
+	registers map[nibble]uint8
+	PC        uint16
+	I         uint16
+	shift1    bool // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
+	bnnn1     bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
 }
 
-var shift1 bool // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
-
-var bnnn1 bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
-
-// TODO: add a ticker and subscription mechanism depending on how implementation pans out
-type TimerRegister struct {
-	val byte
+func NewChip8() *Chip8 {
+	chip8 := &Chip8{
+		memory:  make([]byte, RAM),
+		stack:   make([]uint16, STACK_SIZE),
+		display: make([][]int, DISPLAY_ROWS),
+	}
+	chip8.initialize()
+	return chip8
 }
 
 // ------------------------------------------------
 // 1. First 512 bytes in memory used to have the interpreter, that is no longer true as our interpreter runs in Go space. We can use first 512 for storing the font sprites. 60 bytes between 80-159 (0x050-0x09F)
 // 2. Display is modelled as a 2D boolean array with 64 columns and 32 rows. To initialize the rows, we need a loop.
+// 3. Initialize registers
 // ------------------------------------------------
-func initialize() {
-
+func (chip8 *Chip8) initialize() {
 	// Initialize fonts in memory
+	memory := chip8.memory
 	start := 0x50
 	end := 0x9F
 	for i, j := 0, start; j <= end; i, j = i+1, j+1 {
@@ -83,8 +76,20 @@ func initialize() {
 	}
 
 	// Initialize the rows for display, each row has 'COLS' number of elems
+	display := chip8.display
 	for i := 0; i < DISPLAY_ROWS; i++ {
 		display[i] = make([]int, DISPLAY_COLS)
 	}
 
+	// Initialize registers
+	registers := chip8.registers
+	for i := 0; i < 16; i++ {
+		registers[nibble(i)] = 0
+	}
+
+}
+
+// TODO: add a ticker and subscription mechanism depending on how implementation pans out
+type TimerRegister struct {
+	val byte
 }
