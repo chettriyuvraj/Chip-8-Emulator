@@ -82,6 +82,7 @@ func (chip8 *Chip8) initialize() {
 	}
 
 	// Initialize registers
+	chip8.registers = make(map[nibble]uint8)
 	registers := chip8.registers
 	for i := 0; i < 16; i++ {
 		registers[nibble(i)] = 0
