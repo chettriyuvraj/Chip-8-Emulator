@@ -221,6 +221,28 @@ func (chip8 *Chip8) loop() {
 					fmt.Printf("[WARN] FX33: I out of bounds: I=0x%X\n", chip8.I)
 				}
 
+			// FX55: Store V0 through VX in memory starting at I (modern: I unchanged)
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x55:
+				x := instruction.x()
+				if chip8.I+uint16(x) < RAM {
+					for i := nibble(0); i <= x; i++ {
+						chip8.memory[chip8.I+uint16(i)] = chip8.registers[i]
+					}
+				} else {
+					fmt.Printf("[WARN] FX55: I+X out of bounds: I=0x%X, X=0x%X\n", chip8.I, x)
+				}
+
+			// FX65: Load V0 through VX from memory starting at I (modern: I unchanged)
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x65:
+				x := instruction.x()
+				if chip8.I+uint16(x) < RAM {
+					for i := nibble(0); i <= x; i++ {
+						chip8.registers[i] = chip8.memory[chip8.I+uint16(i)]
+					}
+				} else {
+					fmt.Printf("[WARN] FX65: I+X out of bounds: I=0x%X, X=0x%X\n", chip8.I, x)
+				}
+
 			}
 		}
 	}
