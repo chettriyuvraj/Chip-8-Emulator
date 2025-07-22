@@ -7,12 +7,13 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 func main() {
-	chip8 := NewChip8(false, false)
+	chip8 := NewChip8(false, false, 700)
 
 	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/IBM_Logo.ch8"
 	err := chip8.load(romPath)
@@ -32,123 +33,132 @@ func main() {
 // TODO: set speed for the cycle
 // ------------------------------------------------
 func (chip8 *Chip8) loop() {
+	if chip8.speedHz <= 0 {
+		chip8.speedHz = 700 // fallback default
+	}
+	instructionDelay := time.Second / time.Duration(chip8.speedHz)
+	ticker := time.NewTicker(instructionDelay)
+	defer ticker.Stop()
+
 	for chip8.PC < RAM {
-		instruction := chip8.fetch()
-		chip8.PC += 2
+		select {
+		case <-ticker.C:
+			instruction := chip8.fetch()
+			chip8.PC += 2
 
-		switch {
-		case instruction == 0x00E0:
-			chip8.clearDisplay()
+			switch {
+			case instruction == 0x00E0:
+				chip8.clearDisplay()
 
-		// 1NNN
-		case instruction.firstNibble().equals(0x01):
-			nnn := instruction.nnn()
-			chip8.jumpTo(nnn)
+			// 1NNN
+			case instruction.firstNibble().equals(0x01):
+				nnn := instruction.nnn()
+				chip8.jumpTo(nnn)
 
-		// 6XNN
-		case instruction.firstNibble().equals(0x06):
-			nn := instruction.nn()
-			x := instruction.x()
-			chip8.setRegister(x, nn)
+			// 6XNN
+			case instruction.firstNibble().equals(0x06):
+				nn := instruction.nn()
+				x := instruction.x()
+				chip8.setRegister(x, nn)
 
-		// 7XNN
-		case instruction.firstNibble().equals(0x07):
-			nn := instruction.nn()
-			x := instruction.x()
-			chip8.addToRegister(x, nn)
+			// 7XNN
+			case instruction.firstNibble().equals(0x07):
+				nn := instruction.nn()
+				x := instruction.x()
+				chip8.addToRegister(x, nn)
 
-		// ANNN
-		case instruction.firstNibble().equals(0x0A):
-			nnn := instruction.nnn()
-			chip8.setIndexRegister(nnn)
+			// ANNN
+			case instruction.firstNibble().equals(0x0A):
+				nnn := instruction.nnn()
+				chip8.setIndexRegister(nnn)
 
-		// DXYN
-		case instruction.firstNibble().equals(0xD):
-			x := instruction.x() // vx register contains the x coordinate
-			y := instruction.y() // vy register contains the y coordinate
-			n := instruction.n()
-			chip8.draw(x, y, n)
-			chip8.clearConsole()
-			chip8.printDisplay()
+			// DXYN
+			case instruction.firstNibble().equals(0xD):
+				x := instruction.x() // vx register contains the x coordinate
+				y := instruction.y() // vy register contains the y coordinate
+				n := instruction.n()
+				chip8.draw(x, y, n)
+				chip8.clearConsole()
+				chip8.printDisplay()
 
-		// 2NNN
-		case instruction.firstNibble().equals(0x2):
-			nnn := instruction.nnn()
-			chip8.pcToStack()
-			chip8.jumpTo(nnn)
+			// 2NNN
+			case instruction.firstNibble().equals(0x2):
+				nnn := instruction.nnn()
+				chip8.pcToStack()
+				chip8.jumpTo(nnn)
 
-		// 00EE
-		case instruction == 0x00E0:
-			poppedInstruction := chip8.popStack()
-			chip8.setPC(poppedInstruction)
+			// 00EE
+			case instruction == 0x00E0:
+				poppedInstruction := chip8.popStack()
+				chip8.setPC(poppedInstruction)
 
-		// 3XNN
-		case instruction.firstNibble().equals(0x3):
-			registerIdx := instruction.x()
-			valToCheck := instruction.nn()
-			chip8.skipInstructionIfRegisterEquals(registerIdx, valToCheck)
+			// 3XNN
+			case instruction.firstNibble().equals(0x3):
+				registerIdx := instruction.x()
+				valToCheck := instruction.nn()
+				chip8.skipInstructionIfRegisterEquals(registerIdx, valToCheck)
 
-		// 4XNN
-		case instruction.firstNibble().equals(0x4):
-			registerIdx := instruction.x()
-			valToCheck := instruction.nn()
-			chip8.skipInstructionIfRegisterNotEquals(registerIdx, valToCheck)
+			// 4XNN
+			case instruction.firstNibble().equals(0x4):
+				registerIdx := instruction.x()
+				valToCheck := instruction.nn()
+				chip8.skipInstructionIfRegisterNotEquals(registerIdx, valToCheck)
 
-		// 5XYO
-		case instruction.firstNibble().equals(0x5):
-			regXIdx := instruction.x()
-			regYIdx := instruction.y()
-			chip8.skipInstructionIfRegistersEqualEachOther(regXIdx, regYIdx)
+			// 5XYO
+			case instruction.firstNibble().equals(0x5):
+				regXIdx := instruction.x()
+				regYIdx := instruction.y()
+				chip8.skipInstructionIfRegistersEqualEachOther(regXIdx, regYIdx)
 
-		// 9XYO
-		case instruction.firstNibble().equals(0x9):
-			regXIdx := instruction.x()
-			regYIdx := instruction.y()
-			chip8.skipInstructionIfRegistersNotEqualEachOther(regXIdx, regYIdx)
+			// 9XYO
+			case instruction.firstNibble().equals(0x9):
+				regXIdx := instruction.x()
+				regYIdx := instruction.y()
+				chip8.skipInstructionIfRegistersNotEqualEachOther(regXIdx, regYIdx)
 
-		// 8X set of instructions
-		case instruction.firstNibble().equals(0x8):
-			chip8.logicalAndArithmetic(instruction)
+			// 8X set of instructions
+			case instruction.firstNibble().equals(0x8):
+				chip8.logicalAndArithmetic(instruction)
 
-		// BNNN or BXNN
-		case instruction.firstNibble().equals(0xB):
-			var offsetRegisterIdx nibble
+			// BNNN or BXNN
+			case instruction.firstNibble().equals(0xB):
+				var offsetRegisterIdx nibble
 
-			switch chip8.bnnn1 {
-			case true: // BNNN
-				offsetRegisterIdx = NIBBLE_0
-			case false: // BXNN
-				offsetRegisterIdx = instruction.x()
+				switch chip8.bnnn1 {
+				case true: // BNNN
+					offsetRegisterIdx = NIBBLE_0
+				case false: // BXNN
+					offsetRegisterIdx = instruction.x()
+				}
+
+				addr := instruction.nnn()
+				chip8.jumpWithOffset(addr, offsetRegisterIdx)
+
+			// CXNN: VX = random byte & NN
+			case instruction.firstNibble().equals(0xC):
+				nn := instruction.nn()
+				x := instruction.x()
+				randVal := byte(rand.Intn(256))
+				chip8.setRegister(x, randVal&nn)
+
+			// EX9E: Skip next instruction if key in VX is pressed
+			case instruction.firstNibble().equals(0xE) && instruction.nn() == 0x9E:
+				x := instruction.x()
+				vx := chip8.registers[x]
+				if chip8.isKeyPressed(vx) {
+					chip8.PC += 2
+				}
+
+			// EXA1: Skip next instruction if key in VX is NOT pressed
+			case instruction.firstNibble().equals(0xE) && instruction.nn() == 0xA1:
+				x := instruction.x()
+				vx := chip8.registers[x]
+				if !chip8.isKeyPressed(vx) {
+					chip8.PC += 2
+				}
+
 			}
-
-			addr := instruction.nnn()
-			chip8.jumpWithOffset(addr, offsetRegisterIdx)
-
-		// CXNN: VX = random byte & NN
-		case instruction.firstNibble().equals(0xC):
-			nn := instruction.nn()
-			x := instruction.x()
-			randVal := byte(rand.Intn(256))
-			chip8.setRegister(x, randVal&nn)
-
-		// EX9E: Skip next instruction if key in VX is pressed
-		case instruction.firstNibble().equals(0xE) && instruction.nn() == 0x9E:
-			x := instruction.x()
-			vx := chip8.registers[x]
-			if chip8.isKeyPressed(vx) {
-				chip8.PC += 2
-			}
-
-		// EXA1: Skip next instruction if key in VX is NOT pressed
-		case instruction.firstNibble().equals(0xE) && instruction.nn() == 0xA1:
-			x := instruction.x()
-			vx := chip8.registers[x]
-			if !chip8.isKeyPressed(vx) {
-				chip8.PC += 2
-			}
-
 		}
-
 	}
 }
 
