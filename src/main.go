@@ -87,11 +87,12 @@ func (chip8 *Chip8) loop() {
 			// 2NNN
 			case instruction.firstNibble().equals(0x2):
 				nnn := instruction.nnn()
-				chip8.pcToStack()
+				// Push the address of the next instruction (current PC after increment - 2)
+				chip8.stack = append(chip8.stack, chip8.PC-2)
 				chip8.jumpTo(nnn)
 
 			// 00EE
-			case instruction == 0x00E0:
+			case instruction == 0x00EE:
 				poppedInstruction := chip8.popStack()
 				chip8.setPC(poppedInstruction)
 
@@ -283,7 +284,8 @@ func (chip8 *Chip8) jumpTo(instruction uint16) {
 }
 
 func (chip8 *Chip8) jumpWithOffset(addr uint16, offsetRegisterIdx nibble) {
-	// TODO: Implement jump with offset logic
+	offset := chip8.registers[offsetRegisterIdx]
+	chip8.PC = addr + uint16(offset)
 }
 
 func (chip8 *Chip8) setRegister(registerNum nibble, val byte) {
