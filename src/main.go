@@ -187,6 +187,22 @@ func (chip8 *Chip8) loop() {
 					chip8.registers[NIBBLE_F] = 0
 				}
 
+			// FX0A: Wait for key press, store key value in VX
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x0A:
+				x := instruction.x()
+				keyPressed := false
+				for !keyPressed {
+					keys := sdl.GetKeyboardState()
+					for chip8Key, scancode := range keyMap {
+						if keys[scancode] != 0 {
+							chip8.setRegister(x, chip8Key)
+							keyPressed = true
+							break
+						}
+					}
+				}
+				// Do not increment PC again; already incremented above
+
 			}
 		}
 	}
