@@ -10,7 +10,7 @@ func TestNewChip8Initialization(t *testing.T) {
 	chip8 := NewChip8(false, false, 700)
 
 	// 1. Fonts are initialized correctly in memory from 0x50 to 0x9F
-	for i, j := 0, 0x50; j <= 0x9F; i, j = i+1, j+1 {
+	for i, j := 0, SPRITE_START_LOC; j <= SPRITE_END_LOC; i, j = i+1, j+1 {
 		require.Equal(t, font[i], chip8.memory[j])
 
 	}

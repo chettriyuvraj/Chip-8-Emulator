@@ -15,7 +15,7 @@ import (
 func main() {
 	chip8 := NewChip8(false, false, 700)
 
-	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/IBM_Logo.ch8"
+	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/BC_test.ch8"
 	err := chip8.load(romPath)
 	if err != nil {
 		log.Fatal(err)
@@ -207,7 +207,7 @@ func (chip8 *Chip8) loop() {
 			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x29:
 				x := instruction.x()
 				vx := chip8.registers[x] & 0xF // Only the lower 4 bits
-				chip8.I = 0x50 + uint16(vx)*5
+				chip8.I = SPRITE_START_LOC + uint16(vx)*5
 
 			// FX33: Store BCD representation of VX at I, I+1, I+2
 			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x33:

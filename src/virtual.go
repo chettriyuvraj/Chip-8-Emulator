@@ -11,10 +11,12 @@ import "github.com/veandco/go-sdl2/sdl"
 // ------------------------------------------------
 
 const (
-	RAM          = 4096
-	STACK_SIZE   = 100
-	DISPLAY_COLS = 64
-	DISPLAY_ROWS = 32
+	RAM              = 4096
+	STACK_SIZE       = 100
+	DISPLAY_COLS     = 64
+	DISPLAY_ROWS     = 32
+	SPRITE_START_LOC = 0x00
+	SPRITE_END_LOC   = 0x4F
 )
 
 var font = []uint8{
@@ -93,8 +95,8 @@ func NewChip8(shift1, bnnn1 bool, speedHz int) *Chip8 {
 func (chip8 *Chip8) initialize() {
 	// Initialize fonts in memory
 	memory := chip8.memory
-	start := 0x50
-	end := 0x9F
+	start := SPRITE_START_LOC
+	end := SPRITE_END_LOC
 	for i, j := 0, start; j <= end; i, j = i+1, j+1 {
 		val := font[i]
 		location := j
