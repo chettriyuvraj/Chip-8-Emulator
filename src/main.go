@@ -160,6 +160,33 @@ func (chip8 *Chip8) loop() {
 					chip8.PC += 2
 				}
 
+			// FX07: Set VX = delay timer
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x07:
+				x := instruction.x()
+				chip8.setRegister(x, chip8.delayTimer)
+
+			// FX15: Set delay timer = VX
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x15:
+				x := instruction.x()
+				chip8.delayTimer = chip8.registers[x]
+
+			// FX18: Set sound timer = VX
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x18:
+				x := instruction.x()
+				chip8.soundTimer = chip8.registers[x]
+
+			// FX1E: I += VX, set VF to 1 if overflow from 0x0FFF to >= 0x1000, else 0
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x1E:
+				x := instruction.x()
+				vx := uint16(chip8.registers[x])
+				oldI := chip8.I
+				chip8.I += vx
+				if oldI <= 0x0FFF && chip8.I > 0x0FFF {
+					chip8.registers[NIBBLE_F] = 1
+				} else {
+					chip8.registers[NIBBLE_F] = 0
+				}
+
 			}
 		}
 	}
