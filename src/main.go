@@ -203,6 +203,12 @@ func (chip8 *Chip8) loop() {
 				}
 				// Do not increment PC again; already incremented above
 
+			// FX29: Set I to the location of the sprite for the character in VX
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x29:
+				x := instruction.x()
+				vx := chip8.registers[x] & 0xF // Only the lower 4 bits
+				chip8.I = 0x50 + uint16(vx)*5
+
 			}
 		}
 	}
