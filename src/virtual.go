@@ -1,5 +1,7 @@
 package main
 
+import "github.com/veandco/go-sdl2/sdl"
+
 // ------------------------------------------------
 // Virtual hardware used by the CHIP-8
 // ------------------------------------------------
@@ -32,6 +34,25 @@ var font = []uint8{
 	0xE0, 0x90, 0x90, 0x90, 0xE0, // D
 	0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+}
+
+var keyMap = map[uint8]sdl.Scancode{
+	0x1: sdl.SCANCODE_1,
+	0x2: sdl.SCANCODE_2,
+	0x3: sdl.SCANCODE_3,
+	0xC: sdl.SCANCODE_4,
+	0x4: sdl.SCANCODE_Q,
+	0x5: sdl.SCANCODE_W,
+	0x6: sdl.SCANCODE_E,
+	0xD: sdl.SCANCODE_R,
+	0x7: sdl.SCANCODE_A,
+	0x8: sdl.SCANCODE_S,
+	0x9: sdl.SCANCODE_D,
+	0xE: sdl.SCANCODE_F,
+	0xA: sdl.SCANCODE_Z,
+	0x0: sdl.SCANCODE_X,
+	0xB: sdl.SCANCODE_C,
+	0xF: sdl.SCANCODE_V,
 }
 
 // ------------------------------------------------

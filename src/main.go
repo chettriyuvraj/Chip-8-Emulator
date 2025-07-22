@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
+
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 func main() {
@@ -120,6 +123,29 @@ func (chip8 *Chip8) loop() {
 
 			addr := instruction.nnn()
 			chip8.jumpWithOffset(addr, offsetRegisterIdx)
+
+		// CXNN: VX = random byte & NN
+		case instruction.firstNibble().equals(0xC):
+			nn := instruction.nn()
+			x := instruction.x()
+			randVal := byte(rand.Intn(256))
+			chip8.setRegister(x, randVal&nn)
+
+		// EX9E: Skip next instruction if key in VX is pressed
+		case instruction.firstNibble().equals(0xE) && instruction.nn() == 0x9E:
+			x := instruction.x()
+			vx := chip8.registers[x]
+			if chip8.isKeyPressed(vx) {
+				chip8.PC += 2
+			}
+
+		// EXA1: Skip next instruction if key in VX is NOT pressed
+		case instruction.firstNibble().equals(0xE) && instruction.nn() == 0xA1:
+			x := instruction.x()
+			vx := chip8.registers[x]
+			if !chip8.isKeyPressed(vx) {
+				chip8.PC += 2
+			}
 
 		}
 
@@ -433,4 +459,13 @@ func (chip8 *Chip8) logicalAndArithmetic(i instruction) {
 		}
 
 	}
+}
+
+func (chip8 *Chip8) isKeyPressed(key uint8) bool {
+	scancode, ok := keyMap[key]
+	if !ok {
+		return false
+	}
+	keys := sdl.GetKeyboardState()
+	return keys[scancode] != 0
 }
