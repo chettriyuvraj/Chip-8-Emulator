@@ -239,11 +239,13 @@ func (chip8 *Chip8) draw(registerXNo, registerYNo nibble, height nibble) {
 	}
 }
 
-func isBitOn(val uint8, idx int) int { // index must only be between between 0 and 7 otherwise modulo-ed
+func isBitOn(val uint8, idx int) int {
 	idx %= 8
-
 	mask := uint8(1) << idx
-	return int(val & mask) // will return only 1 or 0
+	if val&mask != 0 {
+		return 1
+	}
+	return 0
 }
 
 // ------------------------------------------------
