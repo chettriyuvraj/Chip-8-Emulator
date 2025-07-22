@@ -209,6 +209,18 @@ func (chip8 *Chip8) loop() {
 				vx := chip8.registers[x] & 0xF // Only the lower 4 bits
 				chip8.I = 0x50 + uint16(vx)*5
 
+			// FX33: Store BCD representation of VX at I, I+1, I+2
+			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x33:
+				x := instruction.x()
+				vx := chip8.registers[x]
+				if chip8.I < RAM && chip8.I+1 < RAM && chip8.I+2 < RAM {
+					chip8.memory[chip8.I] = vx / 100
+					chip8.memory[chip8.I+1] = (vx / 10) % 10
+					chip8.memory[chip8.I+2] = vx % 10
+				} else {
+					fmt.Printf("[WARN] FX33: I out of bounds: I=0x%X\n", chip8.I)
+				}
+
 			}
 		}
 	}
