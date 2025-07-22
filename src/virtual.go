@@ -59,15 +59,17 @@ var keyMap = map[uint8]sdl.Scancode{
 // Chip8 struct
 // ------------------------------------------------
 type Chip8 struct {
-	memory    []byte
-	stack     []uint16
-	display   [][]int
-	registers map[nibble]uint8
-	PC        uint16
-	I         uint16
-	speedHz   int  // Instructions per second
-	shift1    bool // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
-	bnnn1     bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
+	memory     []byte
+	stack      []uint16
+	display    [][]int
+	registers  map[nibble]uint8
+	PC         uint16
+	I          uint16
+	speedHz    int // Instructions per second
+	delayTimer byte
+	soundTimer byte
+	shift1     bool // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
+	bnnn1      bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
 }
 
 func NewChip8(shift1, bnnn1 bool, speedHz int) *Chip8 {

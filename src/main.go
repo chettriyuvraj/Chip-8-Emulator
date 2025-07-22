@@ -33,6 +33,9 @@ func main() {
 // TODO: set speed for the cycle
 // ------------------------------------------------
 func (chip8 *Chip8) loop() {
+	// Delay timer and sound timer will keep running
+	go chip8.initDelaySoundTimers()
+
 	if chip8.speedHz <= 0 {
 		chip8.speedHz = 700 // fallback default
 	}
@@ -478,4 +481,22 @@ func (chip8 *Chip8) isKeyPressed(key uint8) bool {
 	}
 	keys := sdl.GetKeyboardState()
 	return keys[scancode] != 0
+}
+
+func (chip8 *Chip8) initDelaySoundTimers() {
+	delaySpeedHz := 60
+	delayTicker := time.NewTicker(time.Second / time.Duration(delaySpeedHz))
+	defer delayTicker.Stop()
+	for {
+		select {
+		case <-delayTicker.C:
+			if chip8.delayTimer > 0 {
+				chip8.delayTimer -= 1
+			}
+			if chip8.soundTimer > 0 {
+				chip8.soundTimer -= 1
+				fmt.Print("\a") // ASCII Bell character - make computer beep as long as > 0
+			}
+		}
+	}
 }
