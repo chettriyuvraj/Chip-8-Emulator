@@ -7,7 +7,7 @@ import (
 )
 
 func TestInstruction_00E0_ClearScreen(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 	// Fill display with 1s
 	for i := 0; i < DISPLAY_ROWS; i++ {
 		for j := 0; j < DISPLAY_COLS; j++ {
@@ -25,7 +25,7 @@ func TestInstruction_00E0_ClearScreen(t *testing.T) {
 }
 
 func TestInstruction_1NNN_Jump(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 	chip8.PC = 0
 	addr := uint16(0x345)
 	chip8.jumpTo(addr)
@@ -33,7 +33,7 @@ func TestInstruction_1NNN_Jump(t *testing.T) {
 }
 
 func TestInstruction_6XNN_SetRegisterVX(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 	x := nibble(0xA)
 	val := byte(0x77)
 	chip8.setRegister(x, val)
@@ -41,7 +41,7 @@ func TestInstruction_6XNN_SetRegisterVX(t *testing.T) {
 }
 
 func TestInstruction_7XNN_AddToRegisterVX(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 	x := nibble(0x3)
 	chip8.setRegister(x, 5)
 	chip8.addToRegister(x, 7)
@@ -49,7 +49,7 @@ func TestInstruction_7XNN_AddToRegisterVX(t *testing.T) {
 }
 
 func TestInstruction_ANNN_SetIndexRegister(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 	chip8.I = 0
 	addr := uint16(0x2AB)
 	chip8.setIndexRegister(addr)
@@ -57,7 +57,7 @@ func TestInstruction_ANNN_SetIndexRegister(t *testing.T) {
 }
 
 func TestInstruction_DXYN_Draw(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 	// Place a sprite in memory at I
 	chip8.I = 0x300
 	chip8.memory[0x300] = 0b10000000 // Only leftmost pixel on

@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewChip8Initialization(t *testing.T) {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 
 	// 1. Fonts are initialized correctly in memory from 0x50 to 0x9F
 	for i, j := 0, 0x50; j <= 0x9F; i, j = i+1, j+1 {

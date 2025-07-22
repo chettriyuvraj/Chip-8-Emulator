@@ -48,11 +48,13 @@ type Chip8 struct {
 	bnnn1     bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
 }
 
-func NewChip8() *Chip8 {
+func NewChip8(shift1, bnnn1 bool) *Chip8 {
 	chip8 := &Chip8{
 		memory:  make([]byte, RAM),
 		stack:   make([]uint16, STACK_SIZE),
 		display: make([][]int, DISPLAY_ROWS),
+		shift1:  shift1,
+		bnnn1:   bnnn1,
 	}
 	chip8.initialize()
 	return chip8

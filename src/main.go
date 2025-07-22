@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	chip8 := NewChip8()
+	chip8 := NewChip8(false, false)
 
 	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/IBM_Logo.ch8"
 	err := chip8.load(romPath)
