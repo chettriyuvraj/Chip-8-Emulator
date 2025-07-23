@@ -61,27 +61,29 @@ var keyMap = map[uint8]sdl.Scancode{
 // Chip8 struct
 // ------------------------------------------------
 type Chip8 struct {
-	memory     []byte
-	stack      []uint16
-	display    [][]int
-	registers  map[nibble]uint8
-	PC         uint16
-	I          uint16
-	speedHz    int // Instructions per second
-	delayTimer byte
-	soundTimer byte
-	shift1     bool // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
-	bnnn1      bool // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
+	memory        []byte
+	stack         []uint16
+	display       [][]int
+	registers     map[nibble]uint8
+	PC            uint16
+	I             uint16
+	speedHz       int // Instructions per second
+	delayTimer    byte
+	soundTimer    byte
+	shift1        bool           // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
+	bnnn1         bool           // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
+	keyboardState map[uint8]bool // Track state of each key (true if pressed)
 }
 
 func NewChip8(shift1, bnnn1 bool, speedHz int) *Chip8 {
 	chip8 := &Chip8{
-		memory:  make([]byte, RAM),
-		stack:   make([]uint16, STACK_SIZE),
-		display: make([][]int, DISPLAY_ROWS),
-		speedHz: speedHz,
-		shift1:  shift1,
-		bnnn1:   bnnn1,
+		memory:        make([]byte, RAM),
+		stack:         make([]uint16, STACK_SIZE),
+		display:       make([][]int, DISPLAY_ROWS),
+		speedHz:       speedHz,
+		shift1:        shift1,
+		bnnn1:         bnnn1,
+		keyboardState: make(map[uint8]bool),
 	}
 	chip8.initialize()
 	return chip8

@@ -48,6 +48,9 @@ func (chip8 *Chip8) loop() {
 	// Delay timer and sound timer will keep running
 	go chip8.initDelaySoundTimers()
 
+	// Start keyboard state management goroutine
+	go chip8.updateKeyboardState()
+
 	if chip8.speedHz <= 0 {
 		chip8.speedHz = 700 // fallback default
 	}
@@ -205,11 +208,9 @@ func (chip8 *Chip8) loop() {
 			// FX0A: Wait for key press, store key value in VX
 			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x0A:
 				x := instruction.x()
-				sdl.PumpEvents()
-				keys := sdl.GetKeyboardState()
 				keyFound := false
-				for chip8Key, scancode := range keyMap {
-					if keys[scancode] != 0 {
+				for chip8Key := range keyMap {
+					if chip8.keyboardState[chip8Key] {
 						chip8.setRegister(x, chip8Key)
 						keyFound = true
 						break
@@ -575,14 +576,28 @@ func (chip8 *Chip8) logicalAndArithmetic(i instruction) {
 	}
 }
 
-func (chip8 *Chip8) isKeyPressed(key uint8) bool {
-	fmt.Println("checking key press for", key)
-	scancode, ok := keyMap[key]
-	if !ok {
-		return false
+// Add new function for keyboard state management
+func (chip8 *Chip8) updateKeyboardState() {
+	ticker := time.NewTicker(time.Millisecond * 16) // ~60Hz refresh rate
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			sdl.PumpEvents()
+			keys := sdl.GetKeyboardState()
+
+			// Update internal keyboard state
+			for chip8Key, scancode := range keyMap {
+				chip8.keyboardState[chip8Key] = keys[scancode] != 0
+			}
+		}
 	}
-	keys := sdl.GetKeyboardState()
-	return keys[scancode] != 0
+}
+
+// Update isKeyPressed to use internal state
+func (chip8 *Chip8) isKeyPressed(key uint8) bool {
+	return chip8.keyboardState[key]
 }
 
 func (chip8 *Chip8) initDelaySoundTimers() {
