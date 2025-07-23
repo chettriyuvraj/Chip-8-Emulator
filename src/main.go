@@ -228,7 +228,10 @@ func (chip8 *Chip8) loop(canvas *sdl.Renderer, modifier int32) {
 				x := instruction.x()
 				keyFound := false
 				for chip8Key := range keyMap {
-					if chip8.keyboardState[chip8Key] {
+					chip8.keyboardMu.Lock()
+					state := chip8.keyboardState[chip8Key]
+					chip8.keyboardMu.Unlock()
+					if state {
 						chip8.setRegister(x, chip8Key)
 						keyFound = true
 						break
@@ -632,7 +635,9 @@ func (chip8 *Chip8) updateKeyboardState() {
 
 			// Update internal keyboard state
 			for chip8Key, scancode := range keyMap {
+				chip8.keyboardMu.Lock()
 				chip8.keyboardState[chip8Key] = keys[scancode] != 0
+				chip8.keyboardMu.Unlock()
 			}
 		}
 	}
@@ -640,7 +645,10 @@ func (chip8 *Chip8) updateKeyboardState() {
 
 // Update isKeyPressed to use internal state
 func (chip8 *Chip8) isKeyPressed(key uint8) bool {
-	return chip8.keyboardState[key]
+	chip8.keyboardMu.Lock()
+	state := chip8.keyboardState[key]
+	chip8.keyboardMu.Unlock()
+	return state
 }
 
 func (chip8 *Chip8) initDelaySoundTimers() {
