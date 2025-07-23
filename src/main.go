@@ -59,6 +59,9 @@ func (chip8 *Chip8) loop() {
 	defer ticker.Stop()
 
 	for chip8.PC < RAM {
+		// Pump events to update keyboard state only from main thread
+		sdl.PumpEvents()
+
 		select {
 		case <-ticker.C:
 			instruction := chip8.fetch()
@@ -164,7 +167,6 @@ func (chip8 *Chip8) loop() {
 			case instruction.firstNibble().equals(0xE) && instruction.nn() == 0x9E:
 				x := instruction.x()
 				vx := chip8.registers[x]
-				sdl.PumpEvents()
 				if chip8.isKeyPressed(vx) {
 					chip8.PC += 2
 				}
@@ -173,7 +175,6 @@ func (chip8 *Chip8) loop() {
 			case instruction.firstNibble().equals(0xE) && instruction.nn() == 0xA1:
 				x := instruction.x()
 				vx := chip8.registers[x]
-				sdl.PumpEvents()
 				if !chip8.isKeyPressed(vx) {
 					chip8.PC += 2
 				}
@@ -584,7 +585,6 @@ func (chip8 *Chip8) updateKeyboardState() {
 	for {
 		select {
 		case <-ticker.C:
-			sdl.PumpEvents()
 			keys := sdl.GetKeyboardState()
 
 			// Update internal keyboard state
