@@ -1,4 +1,4 @@
-package main
+package chip8
 
 import (
 	"testing"

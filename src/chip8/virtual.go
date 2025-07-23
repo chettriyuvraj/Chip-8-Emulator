@@ -1,9 +1,7 @@
-package main
+package chip8
 
 import (
 	"sync"
-
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 // ------------------------------------------------
@@ -42,23 +40,23 @@ var font = []uint8{
 	0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 }
 
-var keyMap = map[uint8]sdl.Scancode{
-	0x1: sdl.SCANCODE_1,
-	0x2: sdl.SCANCODE_2,
-	0x3: sdl.SCANCODE_3,
-	0xC: sdl.SCANCODE_4,
-	0x4: sdl.SCANCODE_Q,
-	0x5: sdl.SCANCODE_W,
-	0x6: sdl.SCANCODE_E,
-	0xD: sdl.SCANCODE_R,
-	0x7: sdl.SCANCODE_A,
-	0x8: sdl.SCANCODE_S,
-	0x9: sdl.SCANCODE_D,
-	0xE: sdl.SCANCODE_F,
-	0xA: sdl.SCANCODE_Z,
-	0x0: sdl.SCANCODE_X,
-	0xB: sdl.SCANCODE_C,
-	0xF: sdl.SCANCODE_V,
+var keys = []uint8{
+	0x1,
+	0x2,
+	0x3,
+	0xC,
+	0x4,
+	0x5,
+	0x6,
+	0xD,
+	0x7,
+	0x8,
+	0x9,
+	0xE,
+	0xA,
+	0x0,
+	0xB,
+	0xF,
 }
 
 // ------------------------------------------------
@@ -129,7 +127,26 @@ func (chip8 *Chip8) initialize() {
 	chip8.redraw = true
 }
 
-// TODO: add a ticker and subscription mechanism depending on how implementation pans out
-type TimerRegister struct {
-	val byte
+func (chip8 *Chip8) Speed() int {
+	return chip8.speedHz
+}
+
+func (chip8 *Chip8) ProgramCounter() uint16 {
+	return chip8.PC
+}
+
+func (chip8 *Chip8) ShouldRedraw() bool {
+	return chip8.redraw
+}
+
+func (chip8 *Chip8) ResetRedraw() {
+	chip8.redraw = false
+}
+
+func (chip8 *Chip8) GetDisplay() [][]int {
+	return chip8.display
+}
+
+func (chip8 *Chip8) NextInstruction() {
+	chip8.PC += 2
 }
