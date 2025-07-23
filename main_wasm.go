@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"syscall/js"
-	"time"
 
 	"github.com/yuvrajchettri/chip-8-emulator/chip8"
 )
@@ -136,35 +135,32 @@ func updateKeyboardState(emulator *chip8.Chip8) {
 func loop(emulator *chip8.Chip8, modifier int32) {
 	emulator.Initialize()
 
-	speedHz := emulator.Speed()
-	instructionDelay := time.Second / time.Duration(speedHz)
-	ticker := time.NewTicker(instructionDelay)
-	defer ticker.Stop()
+	// Rendering loop runs at 60 FPS because of requestAnimationFrame.
+	// This means you have 60 “slots” per second to both run the CPU and update the display.
+	// This means for each of those 60 frames, you execute ~12 CHIP-8 instructions, so that by the end of 1 second:
+	// 12 instructions/frame * 60 frames/second = 720 instructions/second ~ nearly the correct number of instructions
+	instrPerFrame := emulator.Speed() / 60 // e.g. 700/60 ≈ 12
 
-	// Create animation frame callback
 	var renderFrame js.Func
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// Update keyboard state
 		updateKeyboardState(emulator)
 
-		// Render display if needed
+		// 1. Run CPU
+		for i := 0; i < instrPerFrame; i++ {
+			instr := emulator.Fetch()
+			emulator.NextInstruction()
+			emulator.ExecuteInstruction(instr)
+		}
+
+		// 2. If the VRAM changed, paint it
 		if emulator.ShouldRedraw() {
 			emulator.ResetRedraw()
 			renderDisplay(emulator, modifier)
 		}
 
-		// Execute next instruction
-		if emulator.ProgramCounter() < chip8.RAM {
-			instruction := emulator.Fetch()
-			emulator.NextInstruction()
-			emulator.ExecuteInstruction(instruction)
-		}
-
-		// Request next frame
 		js.Global().Call("requestAnimationFrame", renderFrame)
 		return nil
 	})
-
-	// Start the animation loop
 	js.Global().Call("requestAnimationFrame", renderFrame)
 }
