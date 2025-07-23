@@ -2,7 +2,6 @@ package chip8
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"time"
@@ -342,32 +341,6 @@ func isBitOn(val uint8, idx int) int {
 		return 1
 	}
 	return 0
-}
-
-// ------------------------------------------------
-// Load chip-8 'rom' to memory
-// ------------------------------------------------
-
-func (chip8 *Chip8) Load(filepath string) error {
-	// this is where programs start in memory for chip-8
-	start := 0x200
-
-	f, err := os.Open(filepath)
-	if err != nil {
-		return fmt.Errorf("error loading rom to memory: %w", err)
-	}
-
-	romData, err := io.ReadAll(f)
-	if err != nil {
-		return fmt.Errorf("error loading rom to memory: %w", err)
-	}
-
-	lenRom := len(romData)
-	for i, j := start, 0; i < RAM && j < lenRom; i, j = i+1, j+1 {
-		chip8.memory[i] = romData[j]
-	}
-
-	return nil
 }
 
 func (chip8 *Chip8) printDisplay() {

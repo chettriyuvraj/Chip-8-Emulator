@@ -1,9 +1,11 @@
+//go:build !js && !wasm
+
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/yuvrajchettri/chip-8-emulator/chip8"
@@ -32,15 +34,31 @@ var keyMap = map[uint8]sdl.Scancode{
 
 func main() {
 	// Default ROM filename
-	romFile := "TANK"
+	romName := DefaultROM
 
 	// If a filename is passed as an argument, use it
 	if len(os.Args) > 1 {
-		romFile = os.Args[1]
+		romName = os.Args[1]
 	}
 
-	// Construct the path relative to ../roms
-	romPath := filepath.Join("..", "roms", romFile)
+	// Validate ROM name
+	isValid := false
+	for _, validROM := range ValidROMs {
+		if romName == validROM {
+			isValid = true
+			break
+		}
+	}
+	if !isValid {
+		fmt.Printf("Invalid ROM name. Available ROMs: %v\n", ValidROMs)
+		os.Exit(1)
+	}
+
+	// Get ROM bytes
+	romBytes, err := GetROMBytes(romName)
+	if err != nil {
+		log.Fatalf("Failed to read ROM: %v", err)
+	}
 
 	// Initialize SDL
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -71,8 +89,8 @@ func main() {
 	// Create a new chip-8 instance
 	emulator := chip8.NewChip8(false, false, 700)
 
-	// Load ROM
-	if err := emulator.Load(romPath); err != nil {
+	// Load ROM bytes
+	if err := emulator.LoadBytes(romBytes); err != nil {
 		log.Fatalf("Failed to load ROM: %v", err)
 	}
 

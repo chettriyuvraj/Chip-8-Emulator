@@ -150,3 +150,10 @@ func (chip8 *Chip8) GetDisplay() [][]int {
 func (chip8 *Chip8) NextInstruction() {
 	chip8.PC += 2
 }
+
+// LoadBytes loads a ROM directly from a byte slice
+func (chip8 *Chip8) LoadBytes(data []byte) error {
+	// Copy ROM data to memory starting at 0x200
+	copy(chip8.memory[0x200:], data)
+	return nil
+}
