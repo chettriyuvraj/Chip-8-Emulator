@@ -4,20 +4,277 @@
     <meta charset="utf-8">
     <title>CHIP-8 Emulator</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .rom-selection {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .rom-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .rom-button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .rom-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .rom-button:active {
+            transform: translateY(0);
+        }
+        
+        .rom-button.selected {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
         canvas {
-            border: 1px solid black;
+            border: 3px solid #333;
+            border-radius: 8px;
+            background-color: #000;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .controls h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .keyboard-layout {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #000000;
+        }
+        
+        .status {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .loading {
+            color: #f39c12;
+        }
+        
+        .ready {
+            color: #27ae60;
+        }
+        
+        .error {
+            color: #e74c3c;
         }
     </style>
 </head>
 <body>
-    <canvas id="chip8-canvas" width="640" height="320"></canvas>
+    <div class="container">
+        <h1>CHIP-8 Emulator</h1>
+        
+        <div class="rom-selection">
+            <h3>Select a ROM to play:</h3>
+            <div class="rom-buttons">
+                <button class="rom-button selected" onclick="selectROM('PONG')">PONG</button>
+                <button class="rom-button" onclick="selectROM('TANK')">TANK</button>
+                <button class="rom-button" onclick="selectROM('TETRIS')">TETRIS</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="chip8-canvas" width="640" height="320"></canvas>
+        </div>
+        
+        <div class="status" id="status">Loading...</div>
+        <h2> Controls:</h2>
+        <div class="controls">
+            <b>PONG:</b>
+            <div class="keyboard-layout">
+               1 -------> 4<br>
+               Q -------> R<br>
+            <br>
+            <b>TANK:</b> <br>
+                &nbsp;&nbsp; 2  <br>
+               Q, W, E <br>
+               &nbsp;&nbsp;   S <br>
+            <br>
+            <b>TETRIS:</b> <br>
+                Q, W, E
+            </div>
+        </div>
+    </div>
+
     <script src="wasm_exec.js"></script>
     <script>
-        const go = new Go();
-        WebAssembly.instantiateStreaming(fetch("chip8.wasm"), go.importObject)
-            .then((result) => {
-                go.run(result.instance);
+        let currentROM = 'PONG';
+        let wasmInstance = null;
+        let go = null;
+        let isEmulatorRunning = false;
+        let animationFrameId = null;
+        
+        function updateStatus(message, className = '') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + className;
+        }
+        
+        function clearCanvas() {
+            const canvas = document.getElementById('chip8-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        function stopCurrentEmulator() {
+            if (isEmulatorRunning) {
+                // Call the Go stop function if available
+                if (window.stopEmulator) {
+                    window.stopEmulator();
+                }
+                
+                // Cancel any pending animation frames
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                
+                // Clear the canvas
+                clearCanvas();
+                
+                isEmulatorRunning = false;
+            }
+        }
+        
+        function selectROM(romName) {
+            if (currentROM === romName && isEmulatorRunning) {
+                return; // Same ROM already running
+            }
+            
+            // Update button states
+            document.querySelectorAll('.rom-button').forEach(btn => {
+                btn.classList.remove('selected');
             });
+            event.target.classList.add('selected');
+            
+            currentROM = romName;
+            
+            // Stop current emulator before loading new one
+            stopCurrentEmulator();
+            
+            // Small delay to ensure cleanup is complete
+            setTimeout(() => {
+                loadEmulator();
+            }, 100);
+        }
+        
+        async function loadEmulator() {
+            try {
+                updateStatus('Loading ' + currentROM + '...', 'loading');
+                
+                // Ensure we start with a clean slate
+                clearCanvas();
+                
+                // Reset global variables that might interfere
+                if (window.requestAnimationFrame) {
+                    // Override requestAnimationFrame to track the ID
+                    const originalRAF = window.requestAnimationFrame;
+                    window.requestAnimationFrame = function(callback) {
+                        animationFrameId = originalRAF.call(window, callback);
+                        return animationFrameId;
+                    };
+                }
+                
+                // Create new Go instance
+                go = new Go();
+                
+                // Set the ROM name as a command line argument
+                go.argv = ['chip8.wasm', currentROM];
+                
+                // Fetch and instantiate WASM module
+                const wasmResponse = await fetch("chip8.wasm");
+                if (!wasmResponse.ok) {
+                    throw new Error('Failed to fetch WASM file');
+                }
+                
+                const wasmBytes = await wasmResponse.arrayBuffer();
+                const wasmModule = await WebAssembly.instantiate(wasmBytes, go.importObject);
+                
+                wasmInstance = wasmModule.instance;
+                isEmulatorRunning = true;
+                
+                updateStatus('Running ' + currentROM, 'ready');
+                
+                // Run the Go program (this is async and non-blocking)
+                go.run(wasmInstance).catch(err => {
+                    if (err.message !== 'exit 0') {
+                        console.error('WASM execution error:', err);
+                        updateStatus('Error running ' + currentROM, 'error');
+                        isEmulatorRunning = false;
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading emulator:', error);
+                updateStatus('Error loading ' + currentROM + ': ' + error.message, 'error');
+                isEmulatorRunning = false;
+            }
+        }
+        
+        // Load the default ROM when page loads
+        window.addEventListener('load', () => {
+            loadEmulator();
+        });
+        
+        // Clean up when page is unloaded
+        window.addEventListener('beforeunload', () => {
+            stopCurrentEmulator();
+        });
     </script>
 </body>
 </html>

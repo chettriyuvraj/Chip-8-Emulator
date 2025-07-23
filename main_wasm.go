@@ -19,8 +19,10 @@ var keyMap = map[string]uint8{
 }
 
 var (
-	ctx       js.Value
-	keyStates = make(map[uint8]bool)
+	ctx         js.Value
+	keyStates   = make(map[uint8]bool)
+	stopChannel = make(chan bool, 1)
+	isRunning   = false
 )
 
 func main() {
@@ -70,11 +72,27 @@ func main() {
 	// Setup keyboard event listeners
 	setupKeyboardHandlers()
 
+	// Expose stop function to JavaScript
+	js.Global().Set("stopEmulator", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		stopEmulator()
+		return nil
+	}))
+
 	// Start the emulation loop
 	loop(emulator, 10) // modifier of 10 like in SDL version
 
-	// Keep the program running
-	select {}
+	// Wait for stop signal instead of blocking indefinitely
+	<-stopChannel
+}
+
+func stopEmulator() {
+	if isRunning {
+		isRunning = false
+		select {
+		case stopChannel <- true:
+		default:
+		}
+	}
 }
 
 func renderDisplay(emulator *chip8.Chip8, modifier int32) {
@@ -134,15 +152,21 @@ func updateKeyboardState(emulator *chip8.Chip8) {
 
 func loop(emulator *chip8.Chip8, modifier int32) {
 	emulator.Initialize()
+	isRunning = true
 
 	// Rendering loop runs at 60 FPS because of requestAnimationFrame.
-	// This means you have 60 “slots” per second to both run the CPU and update the display.
+	// This means you have 60 "slots" per second to both run the CPU and update the display.
 	// This means for each of those 60 frames, you execute ~12 CHIP-8 instructions, so that by the end of 1 second:
 	// 12 instructions/frame * 60 frames/second = 720 instructions/second ~ nearly the correct number of instructions
 	instrPerFrame := emulator.Speed() / 60 // e.g. 700/60 ≈ 12
 
 	var renderFrame js.Func
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// Check if we should stop
+		if !isRunning {
+			return nil
+		}
+
 		// Update keyboard state
 		updateKeyboardState(emulator)
 
@@ -159,7 +183,10 @@ func loop(emulator *chip8.Chip8, modifier int32) {
 			renderDisplay(emulator, modifier)
 		}
 
-		js.Global().Call("requestAnimationFrame", renderFrame)
+		// Continue the loop only if still running
+		if isRunning {
+			js.Global().Call("requestAnimationFrame", renderFrame)
+		}
 		return nil
 	})
 	js.Global().Call("requestAnimationFrame", renderFrame)
