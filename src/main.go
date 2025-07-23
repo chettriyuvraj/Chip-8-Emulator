@@ -13,10 +13,23 @@ import (
 )
 
 func main() {
+	// Initialize SDL
+	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
+		log.Fatalf("Failed to initialize SDL: %v", err)
+	}
+	defer sdl.Quit()
+
+	// Create a dummy SDL window to capture keyboard input
+	window, err := sdl.CreateWindow("CHIP-8", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, 100, 100, sdl.WINDOW_HIDDEN)
+	if err != nil {
+		log.Fatalf("Failed to create SDL window: %v", err)
+	}
+	defer window.Destroy()
+
 	chip8 := NewChip8(false, false, 700)
 
-	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/BC_test.ch8"
-	err := chip8.load(romPath)
+	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/PONG"
+	err = chip8.load(romPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -25,7 +38,6 @@ func main() {
 	chip8.PC = 0x200
 
 	chip8.loop()
-
 }
 
 // ------------------------------------------------
@@ -87,8 +99,8 @@ func (chip8 *Chip8) loop() {
 			// 2NNN
 			case instruction.firstNibble().equals(0x2):
 				nnn := instruction.nnn()
-				// Push the address of the next instruction (current PC after increment - 2)
-				chip8.stack = append(chip8.stack, chip8.PC-2)
+				// Push the address of the next instruction (PC already points to it)
+				chip8.stack = append(chip8.stack, chip8.PC)
 				chip8.jumpTo(nnn)
 
 			// 00EE
@@ -149,6 +161,7 @@ func (chip8 *Chip8) loop() {
 			case instruction.firstNibble().equals(0xE) && instruction.nn() == 0x9E:
 				x := instruction.x()
 				vx := chip8.registers[x]
+				sdl.PumpEvents()
 				if chip8.isKeyPressed(vx) {
 					chip8.PC += 2
 				}
@@ -157,6 +170,7 @@ func (chip8 *Chip8) loop() {
 			case instruction.firstNibble().equals(0xE) && instruction.nn() == 0xA1:
 				x := instruction.x()
 				vx := chip8.registers[x]
+				sdl.PumpEvents()
 				if !chip8.isKeyPressed(vx) {
 					chip8.PC += 2
 				}
@@ -191,18 +205,20 @@ func (chip8 *Chip8) loop() {
 			// FX0A: Wait for key press, store key value in VX
 			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x0A:
 				x := instruction.x()
-				keyPressed := false
-				for !keyPressed {
-					keys := sdl.GetKeyboardState()
-					for chip8Key, scancode := range keyMap {
-						if keys[scancode] != 0 {
-							chip8.setRegister(x, chip8Key)
-							keyPressed = true
-							break
-						}
+				sdl.PumpEvents()
+				keys := sdl.GetKeyboardState()
+				keyFound := false
+				for chip8Key, scancode := range keyMap {
+					if keys[scancode] != 0 {
+						chip8.setRegister(x, chip8Key)
+						keyFound = true
+						break
 					}
 				}
-				// Do not increment PC again; already incremented above
+				if !keyFound {
+					// No key pressed, repeat this instruction next cycle
+					chip8.PC -= 2
+				}
 
 			// FX29: Set I to the location of the sprite for the character in VX
 			case instruction.firstNibble().equals(0xF) && instruction.nn() == 0x29:
@@ -560,6 +576,7 @@ func (chip8 *Chip8) logicalAndArithmetic(i instruction) {
 }
 
 func (chip8 *Chip8) isKeyPressed(key uint8) bool {
+	fmt.Println("checking key press for", key)
 	scancode, ok := keyMap[key]
 	if !ok {
 		return false
