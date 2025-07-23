@@ -73,6 +73,7 @@ type Chip8 struct {
 	shift1        bool           // Configurable behaviour for shift instructions (8XY6 and 8XYE) - consider Y register or not
 	bnnn1         bool           // Configurable behaviour for BNNN instruction - BNNN or not (if not then BXNN)
 	keyboardState map[uint8]bool // Track state of each key (true if pressed)
+	redraw        bool           // main loop references this each time to determine if to redraw or not
 }
 
 func NewChip8(shift1, bnnn1 bool, speedHz int) *Chip8 {
@@ -119,6 +120,8 @@ func (chip8 *Chip8) initialize() {
 		registers[nibble(i)] = 0
 	}
 
+	// Set redraw to true
+	chip8.redraw = true
 }
 
 // TODO: add a ticker and subscription mechanism depending on how implementation pans out

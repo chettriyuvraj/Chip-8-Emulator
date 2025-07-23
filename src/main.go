@@ -62,6 +62,11 @@ func (chip8 *Chip8) loop() {
 		// Pump events to update keyboard state only from main thread
 		sdl.PumpEvents()
 
+		if chip8.redraw {
+			chip8.redraw = false
+			chip8.printDisplay()
+		}
+
 		select {
 		case <-ticker.C:
 			instruction := chip8.fetch()
@@ -70,6 +75,7 @@ func (chip8 *Chip8) loop() {
 			switch {
 			case instruction == 0x00E0:
 				chip8.clearDisplay()
+				chip8.redraw = true
 
 			// 1NNN
 			case instruction.firstNibble().equals(0x01):
@@ -99,8 +105,7 @@ func (chip8 *Chip8) loop() {
 				y := instruction.y() // vy register contains the y coordinate
 				n := instruction.n()
 				chip8.draw(x, y, n)
-				chip8.clearConsole()
-				chip8.printDisplay()
+				chip8.redraw = true
 
 			// 2NNN
 			case instruction.firstNibble().equals(0x2):
