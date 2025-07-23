@@ -7,12 +7,24 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 func main() {
+	// Default ROM filename
+	romFile := "TANK"
+
+	// If a filename is passed as an argument, use it
+	if len(os.Args) > 1 {
+		romFile = os.Args[1]
+	}
+
+	// Construct the path relative to ../roms
+	romPath := filepath.Join("..", "roms", romFile)
+
 	// Initialize SDL
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		log.Fatalf("Failed to initialize SDL: %v", err)
@@ -21,7 +33,12 @@ func main() {
 
 	// Create a window
 	var modifier = 10
-	window, windowErr := sdl.CreateWindow("Chip 8", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(DISPLAY_COLS*modifier), int32(DISPLAY_ROWS*modifier), sdl.WINDOW_SHOWN)
+	window, windowErr := sdl.CreateWindow(
+		"Chip 8",
+		sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
+		int32(DISPLAY_COLS*modifier), int32(DISPLAY_ROWS*modifier),
+		sdl.WINDOW_SHOWN,
+	)
 	if windowErr != nil {
 		panic(windowErr)
 	}
@@ -37,14 +54,12 @@ func main() {
 	// Create a new chip-8 instance
 	chip8 := NewChip8(false, false, 700)
 
-	// Init a ROM
-	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/PONG"
-	err := chip8.load(romPath)
-	if err != nil {
-		log.Fatal(err)
+	// Load ROM
+	if err := chip8.load(romPath); err != nil {
+		log.Fatalf("Failed to load ROM: %v", err)
 	}
 
-	// Set PC to start of rom
+	// Set PC to start of ROM
 	chip8.PC = 0x200
 
 	chip8.loop(canvas, int32(modifier))
