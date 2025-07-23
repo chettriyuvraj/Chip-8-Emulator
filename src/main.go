@@ -14,37 +14,47 @@ import (
 
 func main() {
 	// Initialize SDL
-	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
+	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		log.Fatalf("Failed to initialize SDL: %v", err)
 	}
 	defer sdl.Quit()
 
-	// Create a dummy SDL window to capture keyboard input
-	window, err := sdl.CreateWindow("CHIP-8", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, 100, 100, sdl.WINDOW_HIDDEN)
-	if err != nil {
-		log.Fatalf("Failed to create SDL window: %v", err)
+	// Create a window
+	var modifier = 10
+	window, windowErr := sdl.CreateWindow("Chip 8", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(DISPLAY_COLS*modifier), int32(DISPLAY_ROWS*modifier), sdl.WINDOW_SHOWN)
+	if windowErr != nil {
+		panic(windowErr)
 	}
 	defer window.Destroy()
 
+	// Create render surface - canvas
+	canvas, canvasErr := sdl.CreateRenderer(window, -1, 0)
+	if canvasErr != nil {
+		panic(canvasErr)
+	}
+	defer canvas.Destroy()
+
+	// Create a new chip-8 instance
 	chip8 := NewChip8(false, false, 700)
 
+	// Init a ROM
 	romPath := "/Users/yuvrajchettri/Desktop/Yuvi/Development/Chip-8/src/PONG"
-	err = chip8.load(romPath)
+	err := chip8.load(romPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// set PC to start of rom
+	// Set PC to start of rom
 	chip8.PC = 0x200
 
-	chip8.loop()
+	chip8.loop(canvas, int32(modifier))
 }
 
 // ------------------------------------------------
 // Loop for fetch-decode-execute cycle
 // TODO: set speed for the cycle
 // ------------------------------------------------
-func (chip8 *Chip8) loop() {
+func (chip8 *Chip8) loop(canvas *sdl.Renderer, modifier int32) {
 	// Delay timer and sound timer will keep running
 	go chip8.initDelaySoundTimers()
 
@@ -62,11 +72,13 @@ func (chip8 *Chip8) loop() {
 		// Pump events to update keyboard state only from main thread
 		sdl.PumpEvents()
 
+		// Render display if redraw is true
 		if chip8.redraw {
 			chip8.redraw = false
-			chip8.printDisplay()
+			chip8.renderDisplay(canvas, modifier)
 		}
 
+		// Main instruction loop
 		select {
 		case <-ticker.C:
 			instruction := chip8.fetch()
@@ -270,6 +282,32 @@ func (chip8 *Chip8) loop() {
 			}
 		}
 	}
+}
+
+func (chip8 *Chip8) renderDisplay(canvas *sdl.Renderer, modifier int32) {
+	canvas.SetDrawColor(255, 0, 0, 255)
+	canvas.Clear()
+
+	// Get the display buffer and render
+	vector := chip8.display
+	for j := 0; j < len(vector); j++ {
+		for i := 0; i < len(vector[j]); i++ {
+			// Values of pixel are stored in 1D array of size 64 * 32
+			if vector[j][i] != 0 {
+				canvas.SetDrawColor(255, 255, 0, 255)
+			} else {
+				canvas.SetDrawColor(255, 0, 0, 255)
+			}
+			canvas.FillRect(&sdl.Rect{
+				Y: int32(j) * modifier,
+				X: int32(i) * modifier,
+				W: modifier,
+				H: modifier,
+			})
+		}
+	}
+
+	canvas.Present()
 }
 
 // ------------------------------------------------
