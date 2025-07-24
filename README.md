@@ -37,8 +37,6 @@ https://github.com/user-attachments/assets/23af413b-d5ab-4bf2-a86f-49296ea57c62
 
 ## Troubleshooting
 
-### Tetris
-
 I have attachmed a _wasm_exec.js_ file - you might have to use your own one for the WASM build.
 
 Copy your wasm_exec.js into the base directory using:
@@ -47,13 +45,16 @@ Copy your wasm_exec.js into the base directory using:
 cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .
 ```
 
+## Emulator Running ROMs
+
 ### Pong
-## In action
 
-https://github.com/user-attachments/assets/0f5f6c04-7aa6-4071-94ee-b1e3623333f2
+https://github.com/user-attachments/assets/72bb0b84-983a-4d07-aef3-2f5796ff5ca1
 
+### Tetris
 
-https://github.com/user-attachments/assets/9f40bfbe-8299-49d9-9486-8da590fab02d
+https://github.com/user-attachments/assets/97121da9-6dbd-4862-a105-5236e17bb4e7
+
 
 
 
