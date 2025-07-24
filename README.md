@@ -29,9 +29,15 @@ $GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o chip8.wasm
 $python3 -m http.server 8080
 
 # Go to localhost:8080 where you will find the emulator running on a web-frontend
+
+https://github.com/user-attachments/assets/23af413b-d5ab-4bf2-a86f-49296ea57c62
+
+
 ```
 
 ## Troubleshooting
+
+### Tetris
 
 I have attachmed a _wasm_exec.js_ file - you might have to use your own one for the WASM build.
 
@@ -40,3 +46,16 @@ Copy your wasm_exec.js into the base directory using:
 ```
 cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .
 ```
+
+### Pong
+## In action
+
+https://github.com/user-attachments/assets/0f5f6c04-7aa6-4071-94ee-b1e3623333f2
+
+
+https://github.com/user-attachments/assets/9f40bfbe-8299-49d9-9486-8da590fab02d
+
+
+
+
+
