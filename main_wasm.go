@@ -59,7 +59,7 @@ func main() {
 	}
 
 	// Create a new chip-8 instance
-	emulator := chip8.NewChip8(false, false, 600)
+	emulator := chip8.NewChip8(false, false, 400)
 
 	// Load ROM bytes
 	if err := emulator.LoadBytes(romBytes); err != nil {
