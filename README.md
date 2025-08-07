@@ -10,6 +10,8 @@ This emulator has 3 ROMs embedded into it - mostly to avoid the hassle of openin
 
 You can modify the code to use other Chip-8 ROMs.
 
+I have hosted the WASM build [here](https://chettriyuvraj.github.io/Chip-8-Emulator/) with 3 pre-loaded roms.
+
 ## Usage
 
 ## Native Go build
